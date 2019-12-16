@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
     Mesh mesh;
     if (argc == 1)
     {
-        mesh = import_obj("models/BG.obj");
+        mesh = import_obj("models/lastBG.obj");
     }
     else
     {
@@ -53,7 +53,7 @@ int main(int argc, char * argv[])
     float const ratio = static_cast<float>(w) / h;
     float const near = 0.2f;
     float const far  = 100.f;
-    Vector3D const hand{0.f, 1.2f, 2.f};
+    Vector3D const hand{0.5f, 0.2f, 1.f};
     float const c1 = (far + near) / (far - near);
     float const c2 = 2.f * near * far / (far - near);
 
