@@ -2,9 +2,11 @@
 #include "mouse.hpp"
 #include "TriangleRast.hpp"
 #include "ParserObj.hpp"
+#include "JPG_CR.hpp"
 #include <fstream>
 #include <ctime>
 #include <iostream>
+#include <sstream>
 #include <cstdlib>
 
 Mesh::vertex mix(Mesh::vertex const v[3], float const b, float const c) noexcept
@@ -20,8 +22,32 @@ Mesh::vertex mix(Mesh::vertex const v[3], float const b, float const c) noexcept
         f[i] = a * f0[i] + b * f1[i] + c * f2[i];
     return out;
 }
-
 using color = TTYContext::color;
+void Dump(TTYContext const & context)
+{
+    static int frame = 0;
+    int const w = context.width;
+    int const h = context.height;
+
+    IMG_DATA img(w, h, 100);
+    for(int i = 0; i < h; ++i)
+        for(int j = 0; j < w; ++j)
+        {
+            color const * const ptr = context.memory + w * i + j;
+            
+            JSAMPLE * p = img.image_buffer + (w * i + j) * 3;
+            *p = static_cast<JSAMPLE>(ptr->r);
+            *(p+1) = static_cast<JSAMPLE>(ptr->g);
+            *(p+2) = static_cast<JSAMPLE>(ptr->b);           
+        }
+
+    std::ostringstream out_path_stream;
+    out_path_stream << "direct_tr/" << frame << ".jpeg";
+
+    write_JPEG_file(out_path_stream.str().c_str(), img);
+    ++frame;
+}
+
 int main(int argc, char * argv[])
 {
     std::ofstream stats{"stat/stat.log"};
@@ -31,7 +57,7 @@ int main(int argc, char * argv[])
     int const h = context.height;
     float *depth = new float[w * h];
 
-    Mouse mouse;
+    //Mouse mouse;
 
     TriangleRasterizer rast;
     rast.set_viewport(0, 0, w, h);
@@ -60,12 +86,41 @@ int main(int argc, char * argv[])
     Vector3D const light = Vector3D{1.f, 1.f, 1.f}.normalize();
     Vector3D const PivotPosition{0.f, 0.f, 0.f};
 
-    while(1)
+
+    // setup actions of 4 rotations
+    bool firstXCounterClockWise = false;
+    bool secondXClockWise = false;
+    bool thirdYClockWise = false;
+    bool fourthYCounterClockWise = false;
+
+    while(!fourthYCounterClockWise)
     {
+        if (!firstXCounterClockWise)
+        {
+            --px;
+            if (px == -85)
+                firstXCounterClockWise = true;
+        } else if (!secondXClockWise)
+        {
+            ++px;
+            if (px == 250)
+                secondXClockWise = true;
+        } else if (!thirdYClockWise)
+        {
+            ++py;
+            if (py == 100)
+                thirdYClockWise = true;
+        } else if (!fourthYCounterClockWise)
+        {
+            --py;
+            if (py == -100)
+                fourthYCounterClockWise = true;
+        }
+
         int time = ::clock();
 
-        Mouse::event e;
-        while(mouse.poll(e))
+        //Mouse::event e;
+        /*while(mouse.poll(e))
         {
             px += e.dx;
             py += e.dy;
@@ -87,6 +142,7 @@ int main(int argc, char * argv[])
                 return 0;
             }
         }
+        */
 
         float const s       = 0.005f;
         float const phi     = px * s;
@@ -108,7 +164,7 @@ int main(int argc, char * argv[])
         Quatro const A{Vector3D{0.f, 1.f, 0.f}, phi};
         Quatro const B{Vector3D{1.f, 0.f, 0.f}, theta};
 
-        Quatro const Rotation{A * B};
+        Quatro const Rotation{B * A};
         Quatro const Rotation_rev{Rotation.revers()};
 
 
@@ -166,8 +222,14 @@ int main(int argc, char * argv[])
             }
             rout.clear();
         }
-        context.update();
+        //context.update();
 
         stats << (1.f / (::clock() - time)) * CLOCKS_PER_SEC << std::endl;
+        Dump(context);
     }
+
+    delete[] depth;
+    stats.close();
+    ::system("stat/stat");
+    return 0;
 }
