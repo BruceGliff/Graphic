@@ -3,15 +3,17 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include "Geometry.hpp"
+#include "geometry/AdvanceGeometry.h"
+
+using namespace GR;
 
 struct Mesh
 {
     struct vertex
     {
-        Vector3D pos;
-        Vector2D tex;
-        Vector3D norm;
+        Vector<3> pos;
+        Vector<2> tex;
+        Vector<3> norm;
     };
 
     using uint = unsigned;
@@ -26,9 +28,9 @@ inline Mesh import_obj(char const *filename)
     if(!in.is_open())
         throw std::invalid_argument("can not find file " + std::string(filename));
 
-    std::vector<Vector3D> pos;
-    std::vector<Vector2D> tex;
-    std::vector<Vector3D> norm;
+    std::vector<Vector<3>> pos;
+    std::vector<Vector<2>> tex;
+    std::vector<Vector<3>> norm;
 
     std::string line;
     while(std::getline(in, line))
@@ -37,13 +39,13 @@ inline Mesh import_obj(char const *filename)
         char const * const cstr = line.c_str();
         if(cstr[0] == 'v')
         {
-            Vector3D v;
-            Vector2D vt;
-            if(sscanf(cstr + 1, " %f %f %f", &v.x, &v.y, &v.z) == 3)
+            Vector<3> v;
+            Vector<2> vt;
+            if(sscanf(cstr + 1, " %f %f %f", &v.x(), &v.y(), &v.z()) == 3)
                 pos.push_back(v);
-            else if(sscanf(cstr + 1, "t %f %f", &vt.x, &vt.y) == 2)
+            else if(sscanf(cstr + 1, "t %f %f", &vt[0], &vt[1]) == 2)
                 tex.push_back(vt);
-            else if(sscanf(cstr + 1, "n %f %f %f", &v.x, &v.y, &v.z) == 3)
+            else if(sscanf(cstr + 1, "n %f %f %f", &v.x(), &v.y(), &v.z()) == 3)
                 norm.push_back(v);
         }
         else if(cstr[0] == 'f')
@@ -63,7 +65,7 @@ inline Mesh import_obj(char const *filename)
             else
                 while(sscanf(cptr, "%u//%u%n", idx, idx + 2, &eaten) == 2)
                 {
-                    out.verts.push_back({pos[idx[0] - 1], Vector2D{0,0}, norm[idx[2] - 1]});
+                    out.verts.push_back({pos[idx[0] - 1], Vector<2>{0,0}, norm[idx[2] - 1]});
                     cptr += eaten;
                 }
             

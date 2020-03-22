@@ -1,0 +1,181 @@
+
+template<int Dim>
+Vector_base<Dim>::Vector_base(std::initializer_list<float> const & list)  noexcept
+{
+    int i = 0;
+    std::for_each(list.begin(), list.end(), [this, &i](float x)
+    {
+        data_[i] = x;
+        ++i;
+    });
+}
+
+template<int Dim>
+Vector_base<Dim>::Vector_base(Vector_base const & vec) noexcept
+{
+    std::copy(vec.begin(), vec.end(), begin());
+}
+
+template<int Dim>
+Vector_base<Dim> & Vector_base<Dim>::operator=  (Vector_base const & vec) noexcept
+{
+    std::copy(vec.begin(), vec.end(), begin());
+    return *this;
+}
+
+template<int Dim>
+Vector<Dim> Vector_base<Dim>::operator-()const noexcept 
+{ 
+    Vector<Dim> tmp;
+    int i = 0;
+    std::for_each(begin(), end(), [&tmp, &i](float x)
+    {
+        tmp[i] = -x;
+        ++i;
+    });
+    return tmp;
+}
+
+template<int Dim>
+Vector<Dim> Vector_base<Dim>::operator*(float const k) const noexcept 
+{ 
+    Vector<Dim> tmp;
+    int i = 0;
+    std::for_each(begin(), end(), [&tmp, &i, k](float x)
+    {
+        tmp[i] = x * k;
+        ++i;
+    });
+    return tmp;
+}
+
+template<int Dim>
+Vector<Dim> Vector_base<Dim>::operator+(Vector_base const & vec) const noexcept
+{
+    Vector<Dim> tmp;
+    int i = 0;
+    std::for_each(begin(), end(), [&vec, &tmp, &i](float x)
+    {
+        tmp[i] = x + vec[i];
+        ++i;
+    });
+    return tmp;
+}
+
+template<int Dim>
+Vector<Dim> Vector_base<Dim>::operator-(Vector_base const & vec) const noexcept
+{
+    Vector<Dim> tmp;
+    int i = 0;
+    std::for_each(begin(), end(), [&vec, &tmp, &i](float x)
+    {
+        tmp[i] = x - vec[i];
+        ++i;
+    });
+    return tmp;
+}
+
+template<int Dim>
+float Vector_base<Dim>::dot(Vector_base const & vec) const noexcept
+{
+    float tmp = 0;
+    int i = 0;
+    std::for_each(begin(), end(), [&vec, &tmp, &i](float x)
+    {
+        tmp += x * vec[i];
+        ++i;
+    });
+    return tmp;
+}
+
+template<int Dim>
+float Vector_base<Dim>::length() const noexcept
+{
+    return std::sqrt(dot(*this));
+}
+
+Vector<3>::Vector(Vector<4> const & vec) noexcept : 
+    Vector_base<3>::Vector_base<3>{}
+{
+    data_[0] = vec[0] / vec[3];
+    data_[1] = vec[1] / vec[3];
+    data_[2] = vec[2] / vec[3];
+}
+
+Vector<3> Vector<3>::cross(Vector const & vec) const noexcept
+{
+    return Vector{y() * vec.z() - z() * vec.y(), z() * vec.x() - x() * vec.z(), x() * vec.y() - y() * vec.x()};
+}
+Vector<3> Vector<3>::normalize() const noexcept
+{
+    float const len = length();
+    return Vector{x() / len, y() / len, z() / len};
+}
+
+template <int Dim>
+std::ostream & operator<<(std::ostream & os, Vector_base<Dim> const & vec)
+{
+    for (int i = 0; i != Dim; ++i)
+        os << vec[i] << ' ';
+    return os;
+}
+
+template<int Dim>
+Matrix<Dim>::Matrix(std::initializer_list<float> const & list) noexcept
+{
+    std::copy(list.begin(), list.end(), data_);
+}
+
+template<int Dim>
+Matrix<Dim>::Matrix(Matrix const & mat) noexcept
+{ 
+    std::copy(mat.data_, mat.data_ + Dim * Dim, data_); 
+
+} 
+
+template<int Dim>
+Vector<Dim> Matrix<Dim>::operator*(Vector<Dim> const & vec) const noexcept
+{
+    Vector<Dim> out;
+
+    for(int i = 0; i != Dim; ++i)
+        for(int j = 0; j != Dim; ++j)
+            out[i] += data_[i * Dim + j] * vec[j];
+    return out;
+}
+
+
+template<int Dim>
+std::ostream & operator<<(std::ostream & os, Matrix<Dim> const & mat)
+{
+    for (int i = 0; i != Dim; ++i)
+    {
+        for (int  j = 0; j != Dim; ++j)
+            os << mat[i][j] << ' ';
+        os << '\n';
+    }
+    return os;
+}
+
+
+Quatro Quatro::operator*(Quatro const & q) const noexcept
+{
+    return Quatro
+    {
+        scal * q.scal - vec.dot(q.vec) ,
+        (q.vec * scal) + (vec * q.scal) + vec.cross(q.vec)
+    };
+}
+
+
+Quatro Quatro::revers() const noexcept
+{
+    Quatro m{scal, -vec};
+    float const norm_ = 1.f / (scal * m.scal - vec.dot(m.vec));
+    m.scal *= norm_;
+    m.vec.x() *= norm_;
+    m.vec.y() *= norm_;
+    m.vec.z() *= norm_;
+
+    return m;
+}
