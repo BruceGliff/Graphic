@@ -25,7 +25,7 @@ GR::Vertex mix(GR::Vertex const v[3], float const b, float const c) noexcept
 
 using namespace GR;
 
-int main(int argc, char * argv[])
+int main()
 {
     std::ofstream stats{"stat/stat.log"};
 
@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
     rast.set_viewport(0, 0, w, h);
     std::vector<TriangleRasterizer::output> rout;
 
-    object_base Mesh{"models/BG.obj"};
+    model const Mesh{"models/BG.obj"};
 
     int px = 0;
     int py = 0;
@@ -107,7 +107,7 @@ int main(int argc, char * argv[])
         Quatro const Rotation{B * A};
         Quatro const Rotation_rev{Rotation.revers()};
 
-        for (auto && triangle : Mesh.triangles)
+        for (auto && triangle : Mesh)
         {
             Vector<4> point[3];
 

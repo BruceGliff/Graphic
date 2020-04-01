@@ -1,7 +1,7 @@
 #include <fstream>
 #include "object_base.h"
 
-GR::object_base::object_base(char const * objFile)
+GR::model::model(char const * objFile)
 {
     std::ifstream in{objFile};
     if(!in.is_open())
@@ -50,7 +50,9 @@ GR::object_base::object_base(char const * objFile)
                     surface.push_back({pos[idx[0] - 1], Vector<2>{}, norm[idx[2] - 1]});
                     cptr += eaten;
                 }
-            triangles.push_back({surface[0], surface[1], surface[2]});
+            triangles.push_back(Triangle{surface[0], surface[1], surface[2]});
+
+            Triangle A{surface[0], surface[1], surface[2]};
         }
     }
 

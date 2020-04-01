@@ -141,17 +141,20 @@ struct Vertex
 
 struct Triangle
 {
-    Vertex const vertexes[3];
-
+    union 
+    {
+        Vertex const vertexes[3];
+        Vertex const A, B, C;
+    };
+    
     Triangle(Vertex const & v1, Vertex const & v2, Vertex const & v3) : vertexes{v1, v2, v3} {}
 
     // TODO operator=
 
-    // TODO check this!
-    //Triangle(Triangle const &) = delete;
-    //Triangle(Triangle &&) = delete;
-    //Triangle & operator= (Triangle const &) = delete;
-    //Triangle & operator= (Triangle &&) = delete;
+    Triangle(Triangle const &) = delete;
+    Triangle(Triangle && tr) : vertexes(tr.vertexes) {}
+    Triangle & operator= (Triangle const &) = delete;
+    Triangle & operator= (Triangle &&) = delete;
 };
 
 #include "AdvancedGeometry.hpp"
