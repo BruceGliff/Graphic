@@ -132,6 +132,28 @@ struct Quatro
     Quatro revers() const noexcept;
 };
 
+struct Vertex
+{
+    Vector<3> local_position;
+    Vector<2> texture_coords;
+    Vector<3> norm_coords;
+};
+
+struct Triangle
+{
+    Vertex const vertexes[3];
+
+    Triangle(Vertex const & v1, Vertex const & v2, Vertex const & v3) : vertexes{v1, v2, v3} {}
+
+    // TODO operator=
+
+    // TODO check this!
+    //Triangle(Triangle const &) = delete;
+    //Triangle(Triangle &&) = delete;
+    //Triangle & operator= (Triangle const &) = delete;
+    //Triangle & operator= (Triangle &&) = delete;
+};
+
 #include "AdvanceGeometry.hpp"
 
 }//end of namespace

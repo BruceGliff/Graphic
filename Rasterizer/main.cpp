@@ -1,23 +1,24 @@
 #include "window/window_base.hpp"
 #include "mouse.hpp"
 #include "TriangleRast.hpp"
-#include "ParserObj.hpp"
+#include "object/object_base.h"
+
 #include <fstream>
 #include <ctime>
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
 
-Mesh::vertex mix(Mesh::vertex const v[3], float const b, float const c) noexcept
+GR::Vertex mix(GR::Vertex const v[3], float const b, float const c) noexcept
 {
     float const a = 1.f - b - c;
 
-    Mesh::vertex out;
+    GR::Vertex out;
     float *f = reinterpret_cast<float *>(&out);
     float const * const f0 = reinterpret_cast<float const *>(v);
     float const * const f1 = reinterpret_cast<float const *>(v + 1);
     float const * const f2 = reinterpret_cast<float const *>(v + 2);
-    for(unsigned int i = 0u; i < sizeof(Mesh::vertex) / sizeof(float); ++i)
+    for(unsigned int i = 0u; i < sizeof(GR::Vertex) / sizeof(float); ++i)
         f[i] = a * f0[i] + b * f1[i] + c * f2[i];
     return out;
 }
@@ -39,15 +40,7 @@ int main(int argc, char * argv[])
     rast.set_viewport(0, 0, w, h);
     std::vector<TriangleRasterizer::output> rout;
 
-    Mesh mesh;
-    if (argc == 1)
-    {
-        mesh = import_obj("models/BG.obj");
-    }
-    else
-    {
-        mesh = import_obj(argv[1]);
-    }
+    object_base Mesh{"models/BG.obj"};
 
     int px = 0;
     int py = 0;
@@ -114,31 +107,26 @@ int main(int argc, char * argv[])
         Quatro const Rotation{B * A};
         Quatro const Rotation_rev{Rotation.revers()};
 
-
-        for(auto i = 0u; i < mesh.inds.size(); i += 3)
+        for (auto && triangle : Mesh.triangles)
         {
-            Mesh::vertex const v0[3] =
-            {
-                mesh.verts[mesh.inds[i]],
-                mesh.verts[mesh.inds[i + 1]],
-                mesh.verts[mesh.inds[i + 2]]
-            };
-            Vector<4> p[3];
+            Vector<4> point[3];
 
             //      vertex shader       //
-            for(int i = 0; i < 3; ++i)
+
+            for(int j = 0; j < 3; ++j)
             {
-                Quatro const e{v0[i].pos + PivotPosition};
+                // TODO make shader part of object?
+                Quatro const e{triangle.vertexes[j].local_position + PivotPosition};
                 Vector<3> const r = (Rotation * e * Rotation_rev).vec - hand;
                 
-                p[i].x() = -r.x() / ratio;
-                p[i].y() = -r.y();
-                p[i].z() = c1 * r.z() + c2;
-                p[i].w() = r.z();
+                point[j].x() = -r.x() / ratio;
+                point[j].y() = -r.y();
+                point[j].z() = c1 * r.z() + c2;
+                point[j].w() = r.z();
             }
             //                          //
 
-            rast.rasterize(p, rout);
+            rast.rasterize(point, rout);
 
             for(auto const &p : rout)
             {
@@ -146,14 +134,14 @@ int main(int argc, char * argv[])
                     continue;
                 depth[p.y * w + p.x] = p.depth;
 
-                Mesh::vertex const v = mix(v0, p.b, p.c);
-                
+                // TODO check also this part
+                GR::Vertex const v = mix(triangle.vertexes, p.b, p.c);
                 // fragment shader  //
-                float const NL = std::max(0.f, v.norm.dot(light));
-                Vector<3> const cam = (campos - v.pos).normalize();
+                float const NL = std::max(0.f, v.norm_coords.dot(light));
+                Vector<3> const cam = (campos - v.local_position).normalize();
                 Vector<3> const halfway = (cam + light).normalize();
-                float spec = std::max(0.f, v.norm.dot(halfway));
-                for(int i = 0; i < 4; ++i)
+                float spec = std::max(0.f, v.norm_coords.dot(halfway));
+                for(int j = 0; j < 4; ++j)
                     spec *= spec;
                 Vector<3> const cat_color = Vector<3>{1.f, 1.f, 1.f};
                 Vector<3> const light_color = Vector<3>{1.f, 0.9f, 0.77f};
