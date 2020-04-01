@@ -154,6 +154,6 @@ struct Triangle
     //Triangle & operator= (Triangle &&) = delete;
 };
 
-#include "AdvanceGeometry.hpp"
+#include "AdvancedGeometry.hpp"
 
 }//end of namespace

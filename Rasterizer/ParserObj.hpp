@@ -3,7 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include "geometry/AdvanceGeometry.h"
+#include "geometry/AdvancedGeometry.h"
 
 using namespace GR;
 

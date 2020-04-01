@@ -1,7 +1,7 @@
 #pragma once
 #include <cmath>
 #include <vector>
-#include "geometry/AdvanceGeometry.h"
+#include "geometry/AdvancedGeometry.h"
 
 using namespace GR;
 

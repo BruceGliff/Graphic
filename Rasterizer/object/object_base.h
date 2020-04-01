@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "../geometry/AdvanceGeometry.h"
+#include "../geometry/AdvancedGeometry.h"
 
 
 namespace GR{
