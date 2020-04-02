@@ -1,7 +1,7 @@
 #include <fstream>
 #include "object_base.h"
 
-GR::model::model(char const * objFile)
+GR::Model::Model(char const * objFile)
 {
     std::ifstream in{objFile};
     if(!in.is_open())

@@ -40,7 +40,7 @@ int main()
     rast.set_viewport(0, 0, w, h);
     std::vector<TriangleRasterizer::output> rout;
 
-    model const Mesh{"models/BG.obj"};
+    Static_mesh const Mesh{"models/BG.obj"};
 
     int px = 0;
     int py = 0;
