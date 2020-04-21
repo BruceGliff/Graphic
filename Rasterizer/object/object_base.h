@@ -8,15 +8,15 @@ namespace GR{
 class object_base
 {
 protected:
-    Vector<3> pivot_position;
+    Vector3D pivot_position;
 public:
     object_base() = default;
-    object_base(Vector<3> const & position)             noexcept : pivot_position(position) {}
-    object_base(Vector<3>  && position)                 noexcept : pivot_position(position) {}
-    object_base & operator=(Vector<3> const & position) noexcept { pivot_position = position; return *this; }
-    object_base & operator=(Vector<3> && position)      noexcept { pivot_position = position; return *this; }
+    object_base(Vector3D const & position)             noexcept : pivot_position(position) {}
+    object_base(Vector3D  && position)                 noexcept : pivot_position(position) {}
+    object_base & operator=(Vector3D const & position) noexcept { pivot_position = position; return *this; }
+    object_base & operator=(Vector3D && position)      noexcept { pivot_position = position; return *this; }
 
-    Vector<3> const & GetPivot()                  const noexcept { return pivot_position; }
+    Vector3D const & GetPivot()                  const noexcept { return pivot_position; }
 
     virtual ~object_base() {}
 };
@@ -24,9 +24,9 @@ public:
 class object_moveable : virtual public object_base
 {
 public:
-    void MovePivot(Vector<3> const & dr)        noexcept { pivot_position = pivot_position + dr; }
-    void SetPivot(Vector<3> const & position)   noexcept { pivot_position = position; }
-    Vector<3> & GetPivot()                      noexcept { return pivot_position; }
+    void MovePivot(Vector3D const & dr)        noexcept { pivot_position = pivot_position + dr; }
+    void SetPivot(Vector3D const & position)   noexcept { pivot_position = position; }
+    Vector3D & GetPivot()                      noexcept { return pivot_position; }
 
     virtual ~object_moveable() {}
 };
@@ -58,11 +58,6 @@ class object_drawable : virtual public object_base
     Model model;
 public:
     object_drawable(char const * objFile) : model{objFile} {}
-
-    object_drawable(object_drawable const &)                = delete;
-    object_drawable(object_drawable &&)                     = delete;
-    object_drawable & operator= (object_drawable const &)   = delete;
-    object_drawable & operator= (object_drawable &&)        = delete;
 
     std::vector<Triangle>::iterator       begin()       noexcept { return model.begin(); }
     std::vector<Triangle>::const_iterator begin() const noexcept { return model.begin(); }

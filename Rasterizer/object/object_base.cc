@@ -7,9 +7,9 @@ GR::Model::Model(char const * objFile)
     if(!in.is_open())
         throw std::invalid_argument{"can not find file " + std::string{objFile}};
 
-    std::vector<Vector<3>> pos;
-    std::vector<Vector<2>> tex;
-    std::vector<Vector<3>> norm;
+    std::vector<Vector3D> pos;
+    std::vector<Vector2D> tex;
+    std::vector<Vector3D> norm;
 
     std::string line;
 
@@ -18,13 +18,13 @@ GR::Model::Model(char const * objFile)
         char const * const cstr = line.c_str();
         if(cstr[0] == 'v')
         {
-            Vector<3> v;
-            Vector<2> vt;
-            if(sscanf(cstr + 1, " %f %f %f", &v.x(), &v.y(), &v.z()) == 3)
+            Vector3D v;
+            Vector2D vt;
+            if(sscanf(cstr + 1, " %f %f %f", &v.x, &v.y, &v.z) == 3)
                 pos.push_back(v);
             else if(sscanf(cstr + 1, "t %f %f", &vt[0], &vt[1]) == 2)
                 tex.push_back(vt);
-            else if(sscanf(cstr + 1, "n %f %f %f", &v.x(), &v.y(), &v.z()) == 3)
+            else if(sscanf(cstr + 1, "n %f %f %f", &v.x, &v.y, &v.z) == 3)
                 norm.push_back(v);
         }
         else if(cstr[0] == 'f')
@@ -47,7 +47,7 @@ GR::Model::Model(char const * objFile)
             else
                 while(sscanf(cptr, "%u//%u%n", idx, idx + 2, &eaten) == 2)
                 {
-                    surface.push_back({pos[idx[0] - 1], Vector<2>{}, norm[idx[2] - 1]});
+                    surface.push_back({pos[idx[0] - 1], Vector2D{}, norm[idx[2] - 1]});
                     cptr += eaten;
                 }
             triangles.push_back(Triangle{surface[0], surface[1], surface[2]});

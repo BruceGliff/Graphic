@@ -3,149 +3,134 @@
 #include <algorithm>
 #include <ostream>
 #include <cmath>
+#include <xmmintrin.h>
 
 namespace GR{
 
-template <int Dim>
-class Vector;
-
-template <int Dim>
-class Vector_base
+union Vector2D
 {
-protected:
-    float data_[Dim] = {0};
-    
-    typedef float       * iterator;
-    typedef float const * const_iterator;
-
-public:
-    Vector_base() = default;
-    Vector_base(std::initializer_list<float> const & list)  noexcept;    
-    Vector_base(Vector_base const & vec)                    noexcept;
-    Vector_base & operator=  (Vector_base const & vec)      noexcept;
-
-    Vector_base(Vector_base &&)                    = delete;
-    Vector_base & operator=  (Vector_base &&)      = delete;
-
-    float       & operator[] (int i)       noexcept { return data_[i]; }
-    float const & operator[] (int i) const noexcept { return data_[i]; }
-
-    Vector<Dim> operator-()                         const noexcept;
-    Vector<Dim> operator*(float const k)            const noexcept;
-    Vector<Dim> operator+(Vector_base const & vec)  const noexcept;
-    Vector<Dim> operator-(Vector_base const & vec)  const noexcept;
-    
-    float dot(Vector_base const & vec)  const noexcept;
-    float length()                      const noexcept;
-
-    iterator       begin()       noexcept { return data_; }
-    const_iterator begin() const noexcept { return data_; }
-    iterator       end()         noexcept { return data_ + Dim; }
-    const_iterator end()   const noexcept { return data_ + Dim; }
-
-};
-
-template <int Dim>
-class Vector : public Vector_base<Dim>
-{
-public:
-    Vector() = default;
-    Vector(std::initializer_list<float> const & list)   noexcept : Vector_base<Dim>{list} {}
-    Vector(Vector_base<Dim> const & vec)                noexcept : Vector_base<Dim>{vec}  {}
-};
-
-template<>
-class Vector<4> : public Vector_base<4>
-{
-public:
-    Vector() = default;
-    Vector(std::initializer_list<float> const & list)   noexcept : Vector_base<4>{list} {}
-    Vector(Vector_base<4> const & vec)                  noexcept : Vector_base<4>{vec}  {}
-    float const & x() const noexcept { return data_[0]; }
-    float const & y() const noexcept { return data_[1]; }
-    float const & z() const noexcept { return data_[2]; }
-    float const & w() const noexcept { return data_[3]; }
-    float       & x()       noexcept { return data_[0]; }
-    float       & y()       noexcept { return data_[1]; }
-    float       & z()       noexcept { return data_[2]; }
-    float       & w()       noexcept { return data_[3]; }
-};
-
-template <>
-class Vector<3> : public Vector_base<3>
-{
-public:
-    Vector() = default;
-    Vector(std::initializer_list<float> const & list)   noexcept : Vector_base<3>{list} {}
-    Vector(Vector_base<3> const & vec)                  noexcept : Vector_base<3>{vec}  {}
-    Vector(Vector<4> const & vec)                       noexcept;
-
-    float const & x() const noexcept { return data_[0]; }
-    float const & y() const noexcept { return data_[1]; }
-    float const & z() const noexcept { return data_[2]; }
-    float       & x()       noexcept { return data_[0]; }
-    float       & y()       noexcept { return data_[1]; }
-    float       & z()       noexcept { return data_[2]; }
-
-    Vector cross(Vector const & vec)    const noexcept;
-    Vector normalize()                  const noexcept;
-};
-
-template<int Dim>
-class Matrix
-{
-    float data_[Dim * Dim] = {0};
-public:
-    Matrix() = default;
-    Matrix(std::initializer_list<float> const & list)   noexcept;
-    Matrix(Matrix const & mat)                          noexcept;
-    float       *operator[](int i)       noexcept { return &data_[i * Dim]; }
-    float const *operator[](int i) const noexcept { return &data_[i * Dim]; }
-
-    Vector<Dim> operator*(Vector<Dim> const & vec)    const noexcept;
-
-    static Matrix<3> rotate(Vector<3> const & dir, Vector<3> const &_up) noexcept
+    struct
     {
-            Vector<3> const right = _up.cross(dir).normalize();
-            Vector<3> const up = dir.cross(right).normalize();
-            return Matrix<3>
-            {
-                right.x(), right.y(), right.z(),
-                up.x(),    up.y(),    up.z(),
-                dir.x(),   dir.y(),   dir.z()
-            };
+        float x, y;
+    };
+    float data[2];
+
+    Vector2D() = default;
+    float       & operator[] (int i)       noexcept { return data[i]; }
+    float const & operator[] (int i) const noexcept { return data[i]; }
+};
+
+union Vector4D
+{
+    struct 
+    {
+        float x, y, z, w;
+    };
+    float data[4];
+
+    Vector4D() = default;
+    float       & operator[] (int i)       noexcept { return data[i]; }
+    float const & operator[] (int i) const noexcept { return data[i]; }
+};
+
+union Vector3D
+{
+    struct 
+    {
+        float x, y, z, w;
+    };
+    float data[4];
+
+    Vector3D() = default;
+    Vector3D(float const a, float const b, float const c) noexcept
+        : data{a, b, c, 0.f}
+    {}
+    Vector3D(Vector4D const & vec) noexcept
+        : data{vec.x / vec.w, vec.y / vec.w, vec.z / vec.w}
+    {}
+
+    float       & operator[] (int i)       noexcept { return data[i]; }
+    float const & operator[] (int i) const noexcept { return data[i]; }
+    Vector3D operator-()             const noexcept { return Vector3D{-x, -y, -z}; }
+
+    float dot(Vector3D const & vec) const noexcept
+    {
+        return x * vec.x + y * vec.y + z * vec.z;
+    }
+    Vector3D cross(Vector3D const & vec) const noexcept
+    {
+        return Vector3D(y * vec.z - z * vec.y, z * vec.x - x * vec.z, x * vec.y - y * vec.x);
+    }
+    Vector3D operator*(float const k) const noexcept
+    {
+        return Vector3D{x * k, y * k, z * k};
+    } 
+
+    Vector3D operator+(Vector3D const & vec) const noexcept
+    {
+        return Vector3D{x + vec.x, y + vec.y, z + vec.z};
+    }
+    Vector3D operator-(Vector3D const & vec) const noexcept
+    {
+        return Vector3D{x - vec.x, y - vec.y, z - vec.z};
+    }
+    float length() const noexcept
+    {
+        return std::sqrt(dot(*this));
+    }
+    Vector3D normalize() const noexcept
+    {
+        float const len = length();
+        return Vector3D{x / len, y / len, z / len};
+    }
+
+};
+
+
+struct Matrix3D
+{
+    float data[3][3];
+
+    Matrix3D() = default;    
+    float       *operator[](int i)       noexcept {return data[i];}
+    float const *operator[](int i) const noexcept {return data[i];}
+
+    Vector3D operator*(Vector3D const & vec) const noexcept
+    {
+        Vector3D out = Vector3D{0.f, 0.f, 0.f};
+        for(int i = 0; i < 3; ++i)
+            for(int j = 0; j < 3; ++j)
+                out[i] += data[i][j] * vec[j];
+        return out;
     }
 };
 
+
 struct Quatro
 {
-    Vector<3> vec;
+    Vector3D vec;
     float scal;
 
     Quatro() = default;
-    Quatro(float const degree, Vector<3> const & a) : vec(a), scal(degree) {}
-    Quatro(Vector<3> const & a, float const degree) : vec(a.normalize() * std::sin(degree/2)), scal(std::cos(degree/2)) {}
-    Quatro(Vector<3> const & a) : vec(a), scal(0.f) {}
+    Quatro(float const degree, Vector3D const & a) : vec(a), scal(degree) {}
+    Quatro(Vector3D const & a, float const degree) : vec(a.normalize() * std::sin(degree/2)), scal(std::cos(degree/2)) {}
+    Quatro(Vector3D const & a) : vec(a), scal(0.f) {}
 
     Quatro operator*(Quatro const & q) const noexcept;
-
     Quatro revers() const noexcept;
 };
 
 struct Vertex
 {
-    Vector<3> local_position;
-    Vector<2> texture_coords;
-    Vector<3> norm_coords;
+    Vector3D local_position;
+    Vector2D texture_coords;
+    Vector3D norm_coords;
 };
 
 struct Triangle
 {
-    union 
-    {
-        Vertex const vertexes[3];
-        Vertex const A, B, C;
-    };
+    
+    Vertex const vertexes[3];
     
     Triangle(Vertex const & v1, Vertex const & v2, Vertex const & v3) : vertexes{v1, v2, v3} {}
 
@@ -157,6 +142,9 @@ struct Triangle
     Triangle & operator= (Triangle &&) = delete;
 };
 
-#include "AdvancedGeometry.hpp"
 
+
+
+inline Matrix3D rotate(Vector3D const & dir, Vector3D const &_up) noexcept;
 }//end of namespace
+
