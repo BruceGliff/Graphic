@@ -44,7 +44,7 @@ public:
         float c;
     };
 
-    void rasterize(Vector4D const p[3], std::vector<output> &out) noexcept
+    void rasterize(Vector4D const p[3], std::vector<output> &out) const noexcept
     {
         if(p[0].w > 0.f || p[1].w > 0.f || p[2].w > 0.f)
             return;

@@ -3,6 +3,8 @@
 #include "TriangleRast.hpp"
 #include "object/object_base.h"
 
+#include "thread_pool/thread_pool.h"
+
 #include <fstream>
 #include <ctime>
 #include <iostream>
@@ -27,6 +29,8 @@ using namespace GR;
 
 int main()
 {
+    unsigned int frame_count = 0;
+
     std::ofstream stats{"stat/stat.log"};
 
     TTYContext context;
@@ -38,7 +42,6 @@ int main()
 
     TriangleRasterizer rast;
     rast.set_viewport(0, 0, w, h);
-    std::vector<TriangleRasterizer::output> rout;
 
     Static_mesh const Mesh{"models/BG.obj"};
 
@@ -55,9 +58,13 @@ int main()
     Vector3D const light = Vector3D{1.f, 1.f, 1.f}.normalize();
     Vector3D const PivotPosition{0.f, 0.f, 0.f};
 
+    ThreadPool pool;
+    std::vector<std::future<int>> waitPool{};
+
 
     while(1)
     {
+        ++frame_count;
         int time = ::clock();
 
         Mouse::event e;
@@ -78,7 +85,8 @@ int main()
                 //         out.write(reinterpret_cast<char const *>(&c), 3);
                 //     } 
                 stats.close();
-                ::system("stat/stat");
+                //::system("stat/stat");
+                std::cout << frame_count << '\n';
                 delete[] depth;
                 return 0;
             }
@@ -107,8 +115,12 @@ int main()
         Quatro const Rotation{B * A};
         Quatro const Rotation_rev{Rotation.revers()};
 
+        waitPool.reserve(Mesh.size());
         for (auto && triangle : Mesh)
         {
+            waitPool.emplace_back(pool.enqueue([&]{
+
+            std::vector<TriangleRasterizer::output> rout;
             Vector4D point[3];
 
             //      vertex shader       //
@@ -132,7 +144,6 @@ int main()
             {
                 if(p.depth < -1.f || p.depth > depth[p.y * w + p.x])
                     continue;
-                depth[p.y * w + p.x] = p.depth;
 
                 // TODO check also this part
                 GR::Vertex const v = mix(triangle.vertexes, p.b, p.c);
@@ -143,10 +154,12 @@ int main()
                 float spec = std::max(0.f, v.norm_coords.dot(halfway));
                 for(int j = 0; j < 4; ++j)
                     spec *= spec;
-                Vector3D const cat_color = Vector3D{1.f, 1.f, 1.f};
+                Vector3D const model_color = Vector3D{1.f, 1.f, 1.f};
                 Vector3D const light_color = Vector3D{1.f, 0.9f, 0.77f};
-                Vector3D const c = cat_color * (0.2f + 0.4f * NL) + light_color * (0.4f * spec);
+                Vector3D const c = model_color * (0.2f + 0.4f * NL) + light_color * (0.4f * spec);
 
+                // BIG PROBLEM WITH CRITICAL SECTION. There is no problem!!!
+                depth[p.y * w + p.x] = p.depth;
                 context[p.y][p.x] = Color
                 {
                     static_cast<unsigned char>(c.z * 255),
@@ -155,8 +168,14 @@ int main()
                     255
                 };
             }
-            rout.clear();
+            return 0;
+            }));
+
         }
+
+        for (auto && x : waitPool)
+            x.get();
+        waitPool.clear();
         context.Update();
 
         stats << (1.f / (::clock() - time)) * CLOCKS_PER_SEC << std::endl;

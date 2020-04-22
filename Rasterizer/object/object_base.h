@@ -64,6 +64,8 @@ public:
     std::vector<Triangle>::iterator       end()         noexcept { return model.end(); }
     std::vector<Triangle>::const_iterator end()   const noexcept { return model.end(); }
 
+    int size() const noexcept { return model.size(); }
+
     virtual ~object_drawable() {}
 };
 
