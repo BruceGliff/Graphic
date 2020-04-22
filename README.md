@@ -4,14 +4,14 @@
 Реализация собственного графического движка на C++.\
 **Цели**
 1. Отрисовать 3D сцены.
-2. Повысить производительность, используя векторные интрукции.
+2. Повысить производительность, используя векторные интрукции.(Бенчмарк показал, что, благодаря компиляторной оптимизации, векторные инструкции не улучшают производительность, а в некоторых случаях ухудшают, например, когда не срабатывает RVO. Поэтому их **не будем применять**.)
 3. Повысить производительность, используя многопоточность.
 
 ## ENG
 Implementation of own graphics engine in C++. \
 **Purposes**
 1. To render a 3D scene.
-2. Improve performance using vector instructions.
+2. Improve performance using vector instructions.(The benchmark showed that, because of compiler optimization, vector instructions do not improve performance, and in some cases it was getting worse, for example, when RVO did not work. Therefore, we will **not use it**.)
 3. Improve performance using multithreading.
 
 Current status:
