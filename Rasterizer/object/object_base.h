@@ -2,6 +2,7 @@
 #include <vector>
 #include "../geometry/AdvancedGeometry.h"
 
+#include <iostream>
 
 namespace GR{
 
@@ -24,6 +25,7 @@ public:
 class object_moveable : virtual public object_base
 {
 public:
+    using object_base::GetPivot; // To solve problem with hide function
     void MovePivot(Vector3D const & dr)        noexcept { pivot_position = pivot_position + dr; }
     void SetPivot(Vector3D const & position)   noexcept { pivot_position = position; }
     Vector3D & GetPivot()                      noexcept { return pivot_position; }

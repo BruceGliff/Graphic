@@ -13,11 +13,12 @@ union Vector2D
     {
         float x, y;
     };
-    float data[2];
+    float data[2] = {0.f, 0.f};
 
     Vector2D() = default;
     float       & operator[] (int i)       noexcept { return data[i]; }
     float const & operator[] (int i) const noexcept { return data[i]; }
+    void Print(std::ostream & os) const { os << "x: " << x << "; y: " << y; } 
 };
 
 union Vector4D
@@ -26,11 +27,12 @@ union Vector4D
     {
         float x, y, z, w;
     };
-    float data[4];
+    float data[4] = {0.f, 0.f, 0.f, 0.f};
 
     Vector4D() = default;
     float       & operator[] (int i)       noexcept { return data[i]; }
     float const & operator[] (int i) const noexcept { return data[i]; }
+    void Print(std::ostream & os) const { os << "x: " << x << "; y: " << y << "; z: " << z << "; w: " << w; }
 };
 
 union Vector3D
@@ -39,7 +41,7 @@ union Vector3D
     {
         float x, y, z, w;
     };
-    float data[4];
+    float data[4] = {0.f, 0.f, 0.f, 0.f};
 
     Vector3D() = default;
     Vector3D(float const a, float const b, float const c) noexcept
@@ -83,13 +85,14 @@ union Vector3D
         float const len = length();
         return Vector3D{x / len, y / len, z / len};
     }
+    void Print(std::ostream & os) const { os << "x: " << x << "; y: " << y << "; z: " << z; }
 
 };
 
 
 struct Matrix3D
 {
-    float data[3][3];
+    float data[3][3] = {{0.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, {0.f, 0.f, 0.f}};
 
     Matrix3D() = default;    
     float       *operator[](int i)       noexcept {return data[i];}
@@ -137,7 +140,7 @@ struct Triangle
     // TODO operator=
 
     Triangle(Triangle const &) = delete;
-    Triangle(Triangle && tr) : vertexes(tr.vertexes) {}
+    Triangle(Triangle && tr) : vertexes(std::move(tr.vertexes)) {}
     Triangle & operator= (Triangle const &) = delete;
     Triangle & operator= (Triangle &&) = delete;
 };
@@ -146,5 +149,14 @@ struct Triangle
 
 
 inline Matrix3D rotate(Vector3D const & dir, Vector3D const &_up) noexcept;
+
+template <typename T>
+std::ostream & operator<<(std::ostream & os, T const & o)
+{
+    o.Print(os);
+    return os;
+}
+
+
 }//end of namespace
 

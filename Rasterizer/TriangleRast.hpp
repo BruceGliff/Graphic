@@ -3,7 +3,7 @@
 #include <vector>
 #include "geometry/AdvancedGeometry.h"
 
-using namespace GR;
+namespace GR{
 
 class TriangleRasterizer
 {
@@ -90,3 +90,5 @@ public:
         }
     }
 };
+
+}

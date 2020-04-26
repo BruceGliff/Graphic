@@ -25,25 +25,23 @@ GR::Vertex mix(GR::Vertex const v[3], float const b, float const c) noexcept
     return out;
 }
 
-using namespace GR;
-
 int main()
 {
     unsigned int frame_count = 0;
 
     std::ofstream stats{"stat/stat.log"};
 
-    TTYContext context;
+    GR::TTYContext context;
     int const w = 1920;
     int const h = 1080;
     float *depth = new float[w * h];
 
     Mouse mouse;
 
-    TriangleRasterizer rast;
+    GR::TriangleRasterizer rast;
     rast.set_viewport(0, 0, w, h);
 
-    Static_mesh const Mesh{"models/BG.obj"};
+    GR::Static_mesh const Mesh{"models/BG.obj"};
 
     int px = 0;
     int py = 0;
@@ -51,12 +49,12 @@ int main()
     float const ratio = static_cast<float>(w) / h;
     float const near = 0.2f;
     float const far  = 100.f;
-    Vector3D const hand{0.5f, 0.2f, 1.f};
+    GR::Vector3D const hand{0.5f, 0.2f, 1.f};
     float const c1 = (far + near) / (far - near);
     float const c2 = 2.f * near * far / (far - near);
 
-    Vector3D const light = Vector3D{1.f, 1.f, 1.f}.normalize();
-    Vector3D const PivotPosition{0.f, 0.f, 0.f};
+    GR::Vector3D const light = GR::Vector3D{1.f, 1.f, 1.f}.normalize();
+    GR::Vector3D const PivotPosition{0.f, 0.f, 0.f};
 
     ThreadPool pool;
     std::vector<std::future<int>> waitPool{};
@@ -95,41 +93,41 @@ int main()
         float const s       = 0.005f;
         float const phi     = px * s;
         float const theta   = py * s;
-        Vector3D const dir = Vector3D
+        GR::Vector3D const dir = GR::Vector3D
         {
             std::cos(theta) * std::sin(phi),
             std::sin(theta),
             std::cos(theta) * std::cos(phi)
         };
         
-        Vector3D const campos = dir;
+        GR::Vector3D const campos = dir;
 
         context.Clear();
         for(int y = 0; y < h; ++y)
             for(int x = 0; x < w; ++x)
                 depth[y * w + x] = 1.f;
 
-        Quatro const A{Vector3D{0.f, 1.f, 0.f}, phi};
-        Quatro const B{Vector3D{1.f, 0.f, 0.f}, theta};
+        GR::Quatro const A{GR::Vector3D{0.f, 1.f, 0.f}, phi};
+        GR::Quatro const B{GR::Vector3D{1.f, 0.f, 0.f}, theta};
 
-        Quatro const Rotation{B * A};
-        Quatro const Rotation_rev{Rotation.revers()};
+        GR::Quatro const Rotation{B * A};
+        GR::Quatro const Rotation_rev{Rotation.revers()};
 
         waitPool.reserve(Mesh.size());
         for (auto && triangle : Mesh)
         {
             waitPool.emplace_back(pool.enqueue([&]{
 
-            std::vector<TriangleRasterizer::output> rout;
-            Vector4D point[3];
+            std::vector<GR::TriangleRasterizer::output> rout;
+            GR::Vector4D point[3];
 
             //      vertex shader       //
 
             for(int j = 0; j < 3; ++j)
             {
                 // TODO make shader part of object?
-                Quatro const e{triangle.vertexes[j].local_position + PivotPosition};
-                Vector3D const r = (Rotation * e * Rotation_rev).vec - hand;
+                GR::Quatro const e{triangle.vertexes[j].local_position + PivotPosition};
+                GR::Vector3D const r = (Rotation * e * Rotation_rev).vec - hand;
                 
                 point[j].x = -r.x / ratio;
                 point[j].y = -r.y;
@@ -149,18 +147,18 @@ int main()
                 GR::Vertex const v = mix(triangle.vertexes, p.b, p.c);
                 // fragment shader  //
                 float const NL = std::max(0.f, v.norm_coords.dot(light));
-                Vector3D const cam = (campos - v.local_position).normalize();
-                Vector3D const halfway = (cam + light).normalize();
+                GR::Vector3D const cam = (campos - v.local_position).normalize();
+                GR::Vector3D const halfway = (cam + light).normalize();
                 float spec = std::max(0.f, v.norm_coords.dot(halfway));
                 for(int j = 0; j < 4; ++j)
                     spec *= spec;
-                Vector3D const model_color = Vector3D{1.f, 1.f, 1.f};
-                Vector3D const light_color = Vector3D{1.f, 0.9f, 0.77f};
-                Vector3D const c = model_color * (0.2f + 0.4f * NL) + light_color * (0.4f * spec);
+                GR::Vector3D const model_color = GR::Vector3D{1.f, 1.f, 1.f};
+                GR::Vector3D const light_color = GR::Vector3D{1.f, 0.9f, 0.77f};
+                GR::Vector3D const c = model_color * (0.2f + 0.4f * NL) + light_color * (0.4f * spec);
 
                 // BIG PROBLEM WITH CRITICAL SECTION. There is no problem!!!
                 depth[p.y * w + p.x] = p.depth;
-                context[p.y][p.x] = Color
+                context[p.y][p.x] = GR::Color
                 {
                     static_cast<unsigned char>(c.z * 255),
                     static_cast<unsigned char>(c.y * 255),
