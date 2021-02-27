@@ -52,12 +52,6 @@ int main()
     meshes.push_back( new Static_mesh{"models/cube.obj"});
     meshes.push_back( new Static_mesh{"models/sphere.obj"});
 
-    float const hand_len = 1;
-
-    Vector3D const light = Vector3D{-1.f, -0.5f, -0.1f}.normalize();
-    Vector3D const lightColor = Vector3D{1.f, 1.f, 1.f};
-    Vector3D const PivotPosition {0.f, 0.f, 0.f};
-
     std::vector<Vector3D> colors;
     colors.push_back({0.f, 0.f, 1.f}); // cube
     colors.push_back({1.f, 0.f, 0.f}); // sphere
@@ -68,6 +62,10 @@ int main()
     bool thirdYClockWise = false;
     bool fourthYCounterClockWise = false;
 
+    Vector3D const light = Vector3D{-1.f, -0.5f, -0.1f}.normalize();
+    Vector3D const lightColor = Vector3D{1.f, 1.f, 1.f};
+    Vector3D const UP {0.f, 1.f, 0.f};
+    int const scale = 500;
 
     int px = 150;
     int py = 35;
@@ -75,7 +73,7 @@ int main()
 
 
     while(!fourthYCounterClockWise)
-    {	  
+    {firstXCounterClockWise = true; secondXClockWise = true;
         if (!firstXCounterClockWise)
         {
             --px;
@@ -100,24 +98,19 @@ int main()
        
         float const s       = 0.01f;
         float const phi     = (px)* s; // px
-        float const theta   = (py) * s; // 70
+        float theta   = (py) * s; // 70
+
         Vector3D const dir = Vector3D
         {
             std::cos(theta) * std::sin(phi),
             std::sin(theta),
             std::cos(theta) * std::cos(phi)
         };
-        
-        Vector3D const campos = dir * hand_len;
 
         context.Clear();
         for(int y = 0; y < h; ++y)
             for(int x = 0; x < w; ++x)
                 depth[y * w + x] = 100.f;
-
-        int const scale = 500;
-
-        Vector3D const UP {0.f, 1.f, 0.f};
 
         ThreadPool pool;
         std::vector<std::future<void>> waitPool{};
@@ -125,9 +118,12 @@ int main()
 
         for (int y = 0; y < h; ++y)
         {
-            //waitPool.emplace_back(pool.enqueue([&]{
+            Color * line_arr = context[y];
+            float * depth_arr = depth + y * w;
+            waitPool.emplace_back(pool.enqueue([&, y, line_arr, depth_arr]{
             for (int x = 0; x < w; ++x)
             {
+                Vector3D const campos = dir;
                 Vector3D const camDir = -campos.normalize();
                 Vector3D const camRight = camDir.cross(UP).normalize();
                 Vector3D const camDown  = camDir.cross(camRight).normalize();
@@ -140,7 +136,6 @@ int main()
                     mesh_index = (mesh_index + 1) % 2; // cube - 0, sphere - 1
                     
                     for (auto && triangle : *mesh)
-                    //auto && triangle = meshes[0]->model.triangles[42];
                     {
                         // http://ray-tracing.ru/articles213.html
                         Vector3D const D = camDir;
@@ -171,10 +166,10 @@ int main()
                             continue;
 
                         float const distant = (pixelPos - ver.local_position).length();
-                        if (depth[y * w + x] < distant)
+                        if (depth_arr[x] < distant)
                             continue;
 
-                        depth[y * w + x] = distant;
+                        depth[x] = distant;
 
 
 
@@ -278,44 +273,44 @@ int main()
                             if (color.data[j] > 1.f)
                                 color.data[j] = 1.f;
 
-                        context[y][x] = Color
+                        line_arr[x] = Color
                         {
                             static_cast<unsigned char>(color.z * 255),
                             static_cast<unsigned char>(color.y * 255),
                             static_cast<unsigned char>(color.x * 255),
                             255
                         };
-                        if(0)
-                        {
-                            std::cout << "Cam pos: " << campos;
-                            std::cout << "Cam dir: " << camDir;
-                            std::cout << "Cam Rgh: " << camRight;
-                            std::cout << "Cam Dwn: " << camDown;
-                            std::cout << "Pxl pos: " << pixelPos;
+                        // if(0)
+                        // {
+                        //     std::cout << "Cam pos: " << campos;
+                        //     std::cout << "Cam dir: " << camDir;
+                        //     std::cout << "Cam Rgh: " << camRight;
+                        //     std::cout << "Cam Dwn: " << camDown;
+                        //     std::cout << "Pxl pos: " << pixelPos;
 
-                            std::cout << "Vx0 pos: " << triangle.vertexes[0].local_position;
-                            std::cout << "Vx1 pos: " << triangle.vertexes[1].local_position;
-                            std::cout << "Vx2 pos: " << triangle.vertexes[2].local_position;
+                        //     std::cout << "Vx0 pos: " << triangle.vertexes[0].local_position;
+                        //     std::cout << "Vx1 pos: " << triangle.vertexes[1].local_position;
+                        //     std::cout << "Vx2 pos: " << triangle.vertexes[2].local_position;
 
-                            std::cout << "Hit nrm: " << ver.norm_coords;
-                            std::cout << "Hit pos: " << ver.local_position;
+                        //     std::cout << "Hit nrm: " << ver.norm_coords;
+                        //     std::cout << "Hit pos: " << ver.local_position;
 
-                            std::cout << "E1:      " << E1;
-                            std::cout << "E2:      " << E2;
-                            std::cout << "T:       " << T;
-                            std::cout << "P:       " << P;
-                            std::cout << "Q:       " << Q;
-                            std::cout << "Y: " << y << " X: " << x << std::endl;
+                        //     std::cout << "E1:      " << E1;
+                        //     std::cout << "E2:      " << E2;
+                        //     std::cout << "T:       " << T;
+                        //     std::cout << "P:       " << P;
+                        //     std::cout << "Q:       " << Q;
+                        //     std::cout << "Y: " << y << " X: " << x << std::endl;
 
-                            exit(-1);
-                        }
+                        //     exit(-1);
+                        // }
 
 
 
                     }
                 }
                 //context.Update(); // draw each pixel
-            }//}));
+            }}));
             
             //context.Update(); // draw each line
         }

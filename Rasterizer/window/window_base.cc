@@ -49,6 +49,7 @@ void TTYContext::Update() const
     if (!fb0)
         throw std::ios_base::failure{"Update Error: Can not open fb0"};
 
-    ::write(fb0, memory_, Size());
+    int a = ::write(fb0, memory_, Size());
+    ++a;
     ::close(fb0);
 }
