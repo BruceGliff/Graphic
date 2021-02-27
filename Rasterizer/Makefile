@@ -1,4 +1,4 @@
-FLAGS	:= -std=c++17 -ffast-math -Wall -Wextra  -ljpeg
+FLAGS	:= -std=c++17 -ffast-math -Wall -Wextra -ljpeg -pthread
 # geometry/SSE_specialization/vector_base4.cc
 
 all:

@@ -2,6 +2,7 @@
 #include "mouse.hpp"
 #include "TriangleRast.hpp"
 #include "object/object_base.h"
+#include "thread_pool/thread_pool.h"
 
 #include <ctime>
 #include <iostream>
@@ -38,6 +39,8 @@ Vector3D operator*(Vector3D const & lval, Vector3D const & rval)
 
 using namespace GR;
 
+std::mutex crit_mutex;
+
 int main()
 {
     TTYContext context;
@@ -59,11 +62,45 @@ int main()
     colors.push_back({0.f, 0.f, 1.f}); // cube
     colors.push_back({1.f, 0.f, 0.f}); // sphere
 
-    while(1)
-    {        
-        float const s       = 0.5f;
-        float const phi     = (3)* s; // px
-        float const theta   = (70) * s / 100; // 70
+    // setup actions of 4 rotations
+    bool firstXCounterClockWise = false;
+    bool secondXClockWise = false;
+    bool thirdYClockWise = false;
+    bool fourthYCounterClockWise = false;
+
+
+    int px = 150;
+    int py = 35;
+
+
+
+    while(!fourthYCounterClockWise)
+    {	  
+        if (!firstXCounterClockWise)
+        {
+            --px;
+            if (px == -500){
+                firstXCounterClockWise = true; secondXClockWise = true;}//skip back
+        } else if (!secondXClockWise)
+        {
+            ++px;
+            if (px == 250)
+                secondXClockWise = true;
+        } else if (!thirdYClockWise)
+        {
+            ++py;
+            if (py == 500){
+                thirdYClockWise = true;fourthYCounterClockWise = true;}
+        } else if (!fourthYCounterClockWise)
+        {
+            --py;
+            if (py == -100)
+                fourthYCounterClockWise = true;
+        }
+       
+        float const s       = 0.01f;
+        float const phi     = (px)* s; // px
+        float const theta   = (py) * s; // 70
         Vector3D const dir = Vector3D
         {
             std::cos(theta) * std::sin(phi),
@@ -78,13 +115,17 @@ int main()
             for(int x = 0; x < w; ++x)
                 depth[y * w + x] = 100.f;
 
-        int const scale = 1000;
+        int const scale = 500;
 
         Vector3D const UP {0.f, 1.f, 0.f};
+
+        ThreadPool pool;
+        std::vector<std::future<void>> waitPool{};
+        waitPool.reserve(h); // reserve for each line
+
         for (int y = 0; y < h; ++y)
         {
-        //int y = 540;
-        //int x = 919;
+            //waitPool.emplace_back(pool.enqueue([&]{
             for (int x = 0; x < w; ++x)
             {
                 Vector3D const camDir = -campos.normalize();
@@ -93,16 +134,11 @@ int main()
 
                 Vector3D const pixelPos = campos + camDown * ((static_cast<float>(y) - static_cast<float>(h) / 2) / scale) + camRight * ((static_cast<float>(x) - static_cast<float>(w) / 2) / scale);
 
-                // std::vector <Triangle *> triangles;
-                // triangles.push_back(&meshes[0]->model.triangles[0]);
-                // triangles.push_back(&meshes[0]->model.triangles[40]);
                 int mesh_index = -1;
                 for (auto && mesh : meshes)
-                //for (auto * t : triangles)
                 {
                     mesh_index = (mesh_index + 1) % 2; // cube - 0, sphere - 1
                     
-                    //Triangle & triangle = *t;
                     for (auto && triangle : *mesh)
                     //auto && triangle = meshes[0]->model.triangles[42];
                     {
@@ -279,12 +315,16 @@ int main()
                     }
                 }
                 //context.Update(); // draw each pixel
-            }
+            }//}));
+            
             //context.Update(); // draw each line
         }
+        for (auto && x : waitPool)
+            x.get();
+        waitPool.clear();
+
         context.DumpJPEG();
         context.Clear();
-        exit(-1);
     }
 
     delete[] depth;

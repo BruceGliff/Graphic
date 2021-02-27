@@ -3,7 +3,7 @@
 using namespace GR;
 
 Context::Context() :
-    Context{1920u, 1080u}
+    Context{640u, 480}
 {}
 Context::Context(uint const width, uint const height) :
     Frame{width, height},
