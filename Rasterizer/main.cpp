@@ -40,21 +40,14 @@ using namespace GR;
 
 int main()
 {
-    int ReflectCount = 2;
-
     TTYContext context;
     int const w =  static_cast<int>(context.width_);
     int const h = static_cast<int>(context.height_);
     float *depth = new float[w * h];
 
-    Mouse mouse;
-
     std::vector<Static_mesh * > meshes;
     meshes.push_back( new Static_mesh{"models/cube.obj"});
     meshes.push_back( new Static_mesh{"models/sphere.obj"});
-
-    int px = 0;
-    int py = 0;
 
     float const hand_len = 1;
 
@@ -66,29 +59,8 @@ int main()
     colors.push_back({0.f, 0.f, 1.f}); // cube
     colors.push_back({1.f, 0.f, 0.f}); // sphere
 
-
-    int posx = 0;
     while(1)
-    {
-
-        Mouse::event e;
-        while(mouse.poll(e))
-        {
-            px += e.dx;
-            py += e.dy;
-
-            if(e.left_button())
-            {
-                // context.Dump();
-                // stats.close();
-                // ::system("stat/stat");
-                // delete[] depth;
-                // return 0;
-            }
-        }
-
-
-        
+    {        
         float const s       = 0.5f;
         float const phi     = (3)* s; // px
         float const theta   = (70) * s / 100; // 70
@@ -115,8 +87,6 @@ int main()
         //int x = 919;
             for (int x = 0; x < w; ++x)
             {
-
-                //std::cerr << y << ' ' << x << std::endl;
                 Vector3D const camDir = -campos.normalize();
                 Vector3D const camRight = camDir.cross(UP).normalize();
                 Vector3D const camDown  = camDir.cross(camRight).normalize();
@@ -178,8 +148,7 @@ int main()
                         Vector3D RayTracingColor{0.f, 0.f, 0.f};
                         float const RTPower = 1.f;
                         int id = (mesh_index + 1) % 2;
-                        int reflC = 1;
-                        float dTest_rtx = 100.f;
+                        int reflC = 1.f;
                         while (reflC--)
                         {
                             Vector3D const refl = Vector3D::reflect(Drop, Normal);
@@ -193,7 +162,7 @@ int main()
                                 Vector3D const Q_rtx = T_rtx.cross(E1_rtx);
 
                                 float const norm_rtx = clamp(P_rtx.dot(E1_rtx));
-                                if (norm_rtx == 0)
+                                if (norm_rtx == 0.f)
                                     continue;
 
                                 float const u_rtx = P_rtx.dot(T_rtx) / norm_rtx;
@@ -209,53 +178,48 @@ int main()
                                     continue;
 
                                 Vertex const ver_rtx = mix(tr.vertexes, u_rtx, v_rtx);
-
-                                // float const distant_rtx = (pointPos - ver_rtx.local_position).length();
-                                // if(distant_rtx > dTest_rtx)
-                                //     continue;
-                                // dTest_rtx = distant_rtx;
+                                // temporary check is not suppose to be..
+                                if ((pointPos - ver_rtx.local_position).dot(D_rtx) > 0.f)
+                                   continue;
 
                                 if (ver_rtx.norm_coords.dot(D_rtx) >= 0)
                                     continue;
      
-                                if(1){
+                                if(0){
                                 std::cout << "{\n";
                                 std::cout << y << ' ' << x << std::endl;
-                                std::cout << "Camera pos: " << campos;
-                                std::cout << "Camera dir: " << camDir;
-                                std::cout << "Pixel  pos: " << pixelPos;
-                                std::cout << "V0     pos: " << triangle.vertexes[0].local_position;
-                                std::cout << "V1     pos: " << triangle.vertexes[1].local_position;
-                                std::cout << "V2     pos: " << triangle.vertexes[2].local_position;
+                                std::cout << "Camera pos: C=" << campos;
+                                std::cout << "Camera dir: camdir=" << camDir;
+                                std::cout << "Pixel  pos: P=" << pixelPos;
+                                std::cout << "V0     pos: V0=" << triangle.vertexes[0].local_position;
+                                std::cout << "V1     pos: V1=" << triangle.vertexes[1].local_position;
+                                std::cout << "V2     pos: V2=" << triangle.vertexes[2].local_position;
                                 
-                                std::cout << "Hit    pos: " << ver.local_position;
-                                std::cout << "Hit    nrm: " << ver.norm_coords;
+                                std::cout << "Hit    pos: H1P=" << ver.local_position;
+                                std::cout << "Hit    nrm: hitnorm1=" << ver.norm_coords;
                                 
-                                std::cout << "Reflec dir: " << D_rtx;
+                                std::cout << "Reflec dir: refl=" << D_rtx;
 
-                                std::cout << "hitV0  pos: " << tr.vertexes[0].local_position;
-                                std::cout << "hitV1  pos: " << tr.vertexes[1].local_position;
-                                std::cout << "hitV2  pos: " << tr.vertexes[2].local_position;
+                                std::cout << "hitV0  pos: HV0=" << tr.vertexes[0].local_position;
+                                std::cout << "hitV1  pos: HV1=" << tr.vertexes[1].local_position;
+                                std::cout << "hitV2  pos: HV2=" << tr.vertexes[2].local_position;
                                 
-                                std::cout << "2Hit   nrm: " << ver_rtx.norm_coords;
-                                std::cout << "2Hit   pos: " << ver_rtx.local_position;
+                                std::cout << "2Hit   nrm: h2norm=" << ver_rtx.norm_coords;
+                                std::cout << "2Hit   pos: H2P=" << ver_rtx.local_position;
                                 std::cout << "obj id    : " << id << std::endl;
                                 std::cout << "t1 u1 v1  : " << t1_rtx << ' ' << u_rtx << ' ' << v_rtx << std::endl;
-                                std::cout << "P*E1      : " << norm_rtx;
-                                std::cout << "D         : " << D_rtx;
-                                std::cout << "E1        : " << E1_rtx;
-                                std::cout << "E2        : " << E2_rtx;
-                                std::cout << "T         : " << T_rtx;
-                                std::cout << "P         : " << P_rtx;
-                                std::cout << "Q         : " << Q_rtx;
-
-
-
+                                std::cout << "P*E1      : " << norm_rtx << std::endl;
+                                std::cout << "D         : d=" << D_rtx;
+                                std::cout << "E1        : e1=" << E1_rtx;
+                                std::cout << "E2        : e2=" << E2_rtx;
+                                std::cout << "T         : t=" << T_rtx;
+                                std::cout << "P         : p=" << P_rtx;
+                                std::cout << "Q         : q=" << Q_rtx;
 
                                 std::cout << "}\n" << std::endl;
                                 }
 
-                                float const lightPow = 1.f;//std::max(0.f, -light.dot(ver_rtx.norm_coords));
+                                float const lightPow = std::max(0.f, -light.dot(ver_rtx.norm_coords));
                                 RayTracingColor += colors[id] * ( lightPow * RTPower );
 
                                 Drop = refl;
@@ -277,11 +241,6 @@ int main()
                         for (int j = 0; j != 3; ++j)
                             if (color.data[j] > 1.f)
                                 color.data[j] = 1.f;
-
-                        // std::cout << '\n';
-                        // std::cout << color  << (int)static_cast<unsigned char>(color.x * 255) << ' '
-                        //                     << (int)static_cast<unsigned char>(color.y * 255) << ' '
-                        //                     << (int)static_cast<unsigned char>(color.z * 255) << '\n' << std::endl;
 
                         context[y][x] = Color
                         {
@@ -321,11 +280,11 @@ int main()
                 }
                 //context.Update(); // draw each pixel
             }
-            context.Update(); // draw each line
+            //context.Update(); // draw each line
         }
-        context.Update();
+        context.DumpJPEG();
         context.Clear();
-        //exit(-1);
+        exit(-1);
     }
 
     delete[] depth;
