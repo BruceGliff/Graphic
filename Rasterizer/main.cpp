@@ -169,7 +169,7 @@ int main()
                         if (depth_arr[x] < distant)
                             continue;
 
-                        depth[x] = distant;
+                        depth_arr[x] = distant;
 
 
 
