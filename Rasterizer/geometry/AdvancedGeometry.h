@@ -66,6 +66,7 @@ union Vector3D
         return Vector3D{x * k, y * k, z * k};
     } 
 
+
     Vector3D operator+(Vector3D const & vec) const noexcept
     {
         return Vector3D{x + vec.x, y + vec.y, z + vec.z};
@@ -74,6 +75,15 @@ union Vector3D
     {
         return Vector3D{x - vec.x, y - vec.y, z - vec.z};
     }
+    Vector3D & operator+= (Vector3D const & vec)
+    {
+        x += vec.x;
+        y += vec.y;
+        z += vec.z;
+
+        return *this;
+    }
+
     float length() const noexcept
     {
         return std::sqrt(dot(*this));
@@ -83,8 +93,13 @@ union Vector3D
         float const len = length();
         return Vector3D{x / len, y / len, z / len};
     }
-
+    static Vector3D reflect(Vector3D const & light, Vector3D const & norm)
+    {
+        return light - norm * (2 * light.dot(norm));
+    }
+    
 };
+
 
 
 struct Matrix3D
@@ -140,6 +155,10 @@ struct Triangle
     Triangle(Triangle && tr) : vertexes(tr.vertexes) {}
     Triangle & operator= (Triangle const &) = delete;
     Triangle & operator= (Triangle &&) = delete;
+    bool operator==(Triangle const & other) const noexcept
+    {
+        return vertexes == other.vertexes;
+    }
 };
 
 

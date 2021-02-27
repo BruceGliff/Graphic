@@ -33,6 +33,7 @@ public:
 
 class Model final
 {
+    public:
     std::vector<Triangle> triangles;
 
 public:
@@ -55,6 +56,7 @@ public:
 class object_drawable : virtual public object_base
 {
     // TODO add shaders
+public:
     Model model;
 public:
     object_drawable(char const * objFile) : model{objFile} {}

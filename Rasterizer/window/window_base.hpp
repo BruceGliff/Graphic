@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cwchar>
 #include <ios>
+#include <fstream>
 extern "C"
 {
 #include <fcntl.h>
@@ -27,10 +28,10 @@ namespace GR{
 
     class Frame
     {
-    protected:
+    public:
         std::uint32_t const width_;
         std::uint32_t const height_;
-
+    protected:
          Frame()                                                      noexcept : Frame{1920u, 1080u} {}
          Frame(std::uint32_t const width, std::uint32_t const height) noexcept : width_(width), height_(height) {}
         ~Frame() {}
@@ -60,6 +61,23 @@ namespace GR{
     public:
          TTYContext();
         ~TTYContext() {}
+
+        void Dump()
+        {
+            int const w =  static_cast<int>(width_);
+            int const h = static_cast<int>(height_);
+
+
+            std::ofstream out("out.ppm");
+            out << "P6\n" << w << " " << h << "\n255\n";
+            for(int i = 0; i < h; ++i)
+                for(int j = 0; j < w; ++j)
+                {
+                    Color const * const ptr = memory_ + w * i + j;
+                    Color const c = {ptr->r, ptr->g, ptr->b, 255};
+                    out.write(reinterpret_cast<char const *>(&c), 3);
+                } 
+        }
 
         void Update() const;
     };

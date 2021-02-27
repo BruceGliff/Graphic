@@ -17,11 +17,13 @@ Context::~Context()
 }
 Color * Context::operator[](uint const y) noexcept
 {
-    return memory_ + width_ * (height_ - y - 1);
+    //return memory_ + width_ * (height_ - y - 1);
+    return memory_ + width_ * y;
 }
 Color const * Context::operator[](uint const y) const noexcept
 {
-    return memory_ + width_ * (height_ - y - 1);
+    //return memory_ + width_ * (height_ - y - 1);
+    return memory_ + width_ * y;
 }
 void Context::Clear() noexcept
 {
